@@ -2,14 +2,14 @@
 
 provider "aws" {
   region                      = "eu-central-1"
-  access_key                  = "devopshobbies"
-  secret_key                  = "devopshobbies"
+  access_key                  = "localstack"
+  secret_key                  = "localstack"
   skip_credentials_validation = true
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
 
-
   endpoints {
+
     apigateway     = "http://localhost:4566"
     apigatewayv2   = "http://localhost:4566"
     cloudformation = "http://localhost:4566"
@@ -39,8 +39,8 @@ provider "aws" {
 
 ######### DynamoDB #########
 
-resource "aws_dynamodb_table" "  devopshobbies-dev-devops-consumer-events" {
-  name           = "  devopshobbies-dev-devops-consumer-events"
+resource "aws_dynamodb_table" "justdice-dev-devops-consumer-events" {
+  name           = "justdice-dev-devops-consumer-events"
   read_capacity  = "20"
   write_capacity = "20"
   hash_key       = "Id" 
@@ -54,13 +54,13 @@ resource "aws_dynamodb_table" "  devopshobbies-dev-devops-consumer-events" {
 ######### SNS Topic #########
 
 resource "aws_sns_topic" "sns_topic" {
-  name      =   "  devopshobbies-devops-producer-events"
+  name      =   "justdice-dev-devops-consumer-events"
 }
 
 ######### SQS Queue #########
 
 resource "aws_sqs_queue" "queue" {
-  name      =   "  devopshobbies-devops-consumer-events"
+  name      =   "justdice-dev-devops-consumer-events"
 }
 
 ######### SNS Subscription #########

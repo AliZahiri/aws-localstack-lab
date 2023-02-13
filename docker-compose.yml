@@ -1,38 +1,72 @@
-version: "3.8"
+version: "3.9"
 services:
    localstack:
-     image: localstack/localstack-full:latest
+     image: localstack/localstack:latest
+     restart: unless-stopped
      container_name: localstack
      ports:
-       - "127.0.0.1:4510-4559:4510-4559"  
-       - "127.0.0.1:4566:4566"            
+       - "4510-4559:4510-4559"  
+       - "4566:4566"            
      networks:
-       - "local" 
+       - "aws" 
      environment:
        - AWS_DEFAULT_REGION=eu-central-1
        - DEBUG=${DEBUG-} 
        - DOCKER_HOST=unix:///var/run/docker.sock  
+       - "TZ=Asia/Tehran"
      volumes:
        - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack" 
        - "/var/run/docker.sock:/var/run/docker.sock" 
+
    dynamodb-admin:
-      image: aaronshaf/dynamodb-admin
-      ports:
-        - 8001:8001
-      links:
-        - localstack
-      environment:
-        - DYNAMO_ENDPOINT=http://localstack:4566
-        - AWS_REGION=eu-central-1 
-        - AWS_ACCESS_KEY_ID=devopshobbies
-        - AWS_SECRET_ACCESS_KEY=devopshobbies 
-      depends_on:
-        - localstack
-      networks:
-        - "local"
+     image: aaronshaf/dynamodb-admin
+     restart: unless-stopped
+     ports:
+       - 8001:8001
+     environment:
+       - DYNAMO_ENDPOINT=http://localstack:4566
+       - AWS_REGION=eu-central-1 
+       - AWS_ACCESS_KEY_ID=localstack
+       - AWS_SECRET_ACCESS_KEY=localstack
+     links:
+       - "localstack"
+     depends_on:
+       - localstack
+     networks:
+       - "aws"
+
+   producer:
+     container_name: producer
+     restart: unless-stopped
+     image: ghcr.io/justdice/devopstest-producer:latest
+     environment:
+       - CLOUD_AWS_DEFAULTS_ENDPOINT=http://localstack:4566
+     links:
+       - "localstack"
+     depends_on:
+       - localstack
+     networks:
+       - "aws"
+
+   consumer:
+     container_name: consumer
+     restart: unless-stopped
+     image: ghcr.io/justdice/devopstest-consumer:latest
+     environment:
+       - CLOUD_AWS_DEFAULTS_ENDPOINT=http://localstack:4566
+     links:
+       - "localstack"
+     depends_on:
+       - localstack
+       - producer
+     networks:
+       - "aws"
+      
 volumes:
   localstack-data:
     name: localstack-data
+
 networks:
-  local:
+  aws:
+    name: aws`
     driver: bridge
